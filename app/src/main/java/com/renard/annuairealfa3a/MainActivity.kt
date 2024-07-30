@@ -1,7 +1,9 @@
 package com.renard.annuairealfa3a
 
 import android.os.Bundle
+import android.view.ViewGroup
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
@@ -12,19 +14,24 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        webView = findViewById(R.id.webView)
-        webView.webViewClient = CustomWebViewClient()
+        initializeWebView("https://nolannorofino.fr/app/alfa3a/anu/anu.html")
+    }
 
-        // Enable JavaScript
-        webView.settings.javaScriptEnabled = true
+    private fun initializeWebView(url: String) {
+        // Remove any existing WebView
+        findViewById<ViewGroup>(R.id.webViewContainer)?.removeAllViews()
 
-        // Enable DOM storage
-        webView.settings.domStorageEnabled = true
+        // Create a new WebView
+        webView = WebView(this).apply {
+            webViewClient = CustomWebViewClient()
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.databaseEnabled = true
+            loadUrl(url)
+        }
 
-        // Enable database storage
-        webView.settings.databaseEnabled = true
-
-        webView.loadUrl("https://nolannorofino.fr/app/alfa3a/anu/anu.html")
+        // Add the new WebView to the container
+        findViewById<ViewGroup>(R.id.webViewContainer).addView(webView)
 
         // Set up swipe gesture listener
         setupSwipeGestureListener()
@@ -54,7 +61,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         if (webView.url == "https://nolannorofino.fr/app/alfa3a/anu/map.html") {
-            webView.loadUrl("https://nolannorofino.fr/app/alfa3a/anu/anu.html")
+            initializeWebView("https://nolannorofino.fr/app/alfa3a/anu/anu.html")
         } else if (webView.canGoBack()) {
             webView.goBack()
         } else {
