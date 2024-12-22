@@ -1,5 +1,7 @@
 # Annuaire des Établissements
 
+>Avis important : Cette application est un projet personnel et n’est pas affiliée à l’association Alfa3a. Les informations et services fournis le sont à des fins de démonstration.
+
 Ce projet est une application web et mobile qui permet de rechercher et de visualiser les établissements de l'association Alfa3a. L'application affiche des informations détaillées sur chaque établissement, y compris l'adresse, le téléphone, les services offerts, les horaires et la distance depuis le siège social.
 
 ## Fonctionnalités
