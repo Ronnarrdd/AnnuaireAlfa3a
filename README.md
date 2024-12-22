@@ -10,6 +10,8 @@ Ce projet est une application web et mobile qui permet de rechercher et de visua
 - Filtrer les établissements par localité et par service.
 - Afficher les horaires d'ouverture des établissements.
 - Afficher la distance depuis le siège social d'Alfa3a.
+- Afficher un itinéraire avec l'application GPS par défaut
+- Partager un établissement par WhatsApp, SMS, ou E-mail
 - Conserver l'historique des recherches.
 - Interface responsive adaptée aux appareils mobiles.
 
@@ -28,17 +30,8 @@ Ce projet est une application web et mobile qui permet de rechercher et de visua
 
 - Saisissez le nom d'un établissement, une adresse, une localité ou un service dans le champ de recherche.
 - Utilisez les filtres pour affiner votre recherche par localité ou service.
+- Vous pouvez ajouter des établissement en favori et les consulter en appuyant sur le bouton "Favoris" dans le menu en bas de l'écran
 
-### Historique des recherches
-
-- L'historique des recherches est affiché sous la barre de recherche.
-- Cliquez sur le menu burger pour afficher l'historique des recherches.
-- Cliquez sur un élément de l'historique pour effectuer à nouveau cette recherche.
-- Cliquez sur "Effacer l'historique" pour supprimer l'historique des recherches.
-
-### Distance depuis le siège social
-
-- La distance entre chaque établissement et le siège social d'Alfa3a est calculée et affichée.
 
 ## Développement
 
