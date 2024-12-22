@@ -601,26 +601,29 @@
 
         
         const searchEstablishments = () => {
-            const query = normalizeString(document.getElementById('searchInput').value);
-            const serviceFilter = document.getElementById('serviceFilter').value;
-            const localityFilter = document.getElementById('localityFilter').value;
+    const query = normalizeString(document.getElementById('searchInput').value);
+    const serviceFilter = document.getElementById('serviceFilter').value;
+    const localityFilter = document.getElementById('localityFilter').value;
 
-            const filteredEstablishments = establishmentsData.filter(est => {
-                const matchesSearch = !query || 
-                    est.normalizedTitle.includes(query) ||
-                    est.normalizedAddressLine.includes(query) ||
-                    est.normalizedLocality.includes(query) ||
-                    est.normalizedService.includes(query) ||
-                    est.normalizedDescription.includes(query);
+    const filteredEstablishments = establishmentsData.filter(est => {
+        const matchesSearch = !query || 
+            est.normalizedTitle.includes(query) ||
+            est.normalizedAddressLine.includes(query) ||
+            est.normalizedLocality.includes(query) ||
+            est.normalizedService.includes(query) ||
+            est.normalizedDescription.includes(query);
 
-                const matchesService = !serviceFilter || est.service === serviceFilter;
-                const matchesLocality = !localityFilter || est.field_address_locality === localityFilter;
+        const matchesService = !serviceFilter || est.service === serviceFilter;
+        const matchesLocality = !localityFilter || est.field_address_locality === localityFilter;
 
-                return matchesSearch && matchesService && matchesLocality;
-            });
+        return matchesSearch && matchesService && matchesLocality;
+    });
 
-                            displayWithShare(filteredEstablishments);
-        };
+    displayEstablishments(filteredEstablishments);
+    if (query) {
+        addToSearchHistory(query);
+    }
+};
 
         const toggleFavorite = (nid, button) => {
             const icon = button.querySelector('i');
