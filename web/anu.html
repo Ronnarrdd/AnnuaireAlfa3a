@@ -2,243 +2,583 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Annuaire des Établissements</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Theme sombre */
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: white;
+            --text-color: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --primary-color: #d96728;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #111827;
+            --card-bg: #1f2937;
+            --text-color: #f9fafb;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+            --primary-color: #fb923c;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .establishment-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Pull to refresh */
+        .pull-indicator {
+            position: fixed;
+            top: -60px;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-color);
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+            z-index: 30;
+        }
+
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                var(--border-color) 25%,
+                var(--bg-color) 50%,
+                var(--border-color) 75%
+            );
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Share menu */
+        .share-menu {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--card-bg);
+            padding: 1rem;
+            border-radius: 1rem 1rem 0 0;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            z-index: 60;
+        }
+
+        .share-menu.visible {
+            transform: translateY(0);
+        }
+
+        /* Historique de recherche */
+        .search-history {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 45;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .search-history.visible {
+            display: block;
+        }
+
+        .search-history-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-history-item:hover {
+            background-color: var(--bg-color);
+        }
+
+        /* Animation des cartes */
+        .establishment-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .establishment-card:active {
+            transform: scale(0.98);
+        }
+
+.search-bar, .filters, .bottom-bar {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .establishment-card {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #themeToggle {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        #themeToggle i {
+            transition: transform 0.3s;
+        }
+
+        [data-theme="dark"] #themeToggle i {
+            transform: rotate(180deg);
+            color: #fbbf24;
+        }
+
+        [data-theme="dark"] .text-gray-600 {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .bg-blue-100 {
+            background-color: rgba(37, 99, 235, 0.2);
+        }
+
+        [data-theme="dark"] .bg-green-100 {
+            background-color: rgba(34, 197, 94, 0.2);
+        }
+
+        [data-theme="dark"] .text-blue-700 {
+            color: #60a5fa;
+        }
+
+        [data-theme="dark"] .text-green-700 {
+            color: #4ade80;
+        }
+        [data-theme="dark"] #establishments {
+    background-color: #111827;
+    margin-top: -1rem;
+}
+
+
+        .share-btn {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            z-index: 10;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            padding: 0.5rem;
+            border-radius: 9999px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .share-btn:active {
+            transform: scale(0.95);
+        }
+
         @font-face {
             font-family: 'RimouskiSB';
             src: url('fonts/rimouskisb-regular-webfont.woff2') format('woff2');
-            font-weight: normal;
-            font-style: normal;
         }
         @font-face {
             font-family: 'MerriweatherSans';
             src: url('fonts/merriweathersans-regular-webfont.woff2') format('woff2');
-            font-weight: normal;
-            font-style: normal;
         }
+        
         body {
-            font-family: 'MerriweatherSans', sans-serif; /* Utiliser la police Merriweather Sans pour le texte */
+            font-family: 'MerriweatherSans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: env(safe-area-inset-bottom);
         }
-        .rounded-img {
-            border-radius: 8px;
+
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 0.75rem;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            z-index: 50;
         }
-        .float-img {
-            float: right;
-            margin-left: 15px;
-            margin-bottom: 15px;
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
+
+        .bottom-bar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.8rem;
         }
-        .header-svg {
-            display: block;
-            width: 100%;
-            height: auto;
-            margin: 0;
+
+        .bottom-bar-item i {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
         }
-        .header-container {
-            position: relative;
-            text-align: center;
-            color: white;
-            margin: 0;
+
+        .bottom-bar-item.active {
+            color: #d96728;
+        }
+
+        .establishment-card {
+            border-radius: 12px;
+            margin: 1rem;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-        .header-svg-container {
+
+        [data-theme="dark"] .establishment-card {
+            background-color: #1f2937;
+            color: white;
+        }
+
+        [data-theme="dark"] .text-gray-600 {
+            color: #9ca3af;
+        }
+
+        [data-theme="dark"] .search-bar,
+        [data-theme="dark"] .filters {
+            background-color: #1f2937;
+            color: white;
+        }
+
+        [data-theme="dark"] .bottom-bar {
+            background-color: #1f2937;
+            border-top: 1px solid #374151;
+        }
+
+        [data-theme="dark"] input,
+        [data-theme="dark"] select {
+            background-color: #374151;
+            color: white;
+            border-color: #4b5563;
+        }
+
+        [data-theme="dark"] .bg-white {
+            background-color: #1f2937;
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            background-color: #f8f8f8;
+            overflow: hidden;
+        }
+
+        .card-image {
             position: absolute;
             top: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
+            object-fit: cover;
+            object-position: center;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            transition: opacity 0.3s ease;
         }
-        .header-title {
-            padding: 60px 0 10px;
-            margin: 0;
-            color: #d96728;
-            font-family: 'RimouskiSB', sans-serif; /* Appliquer la police RimouskiSB aux titres */
-        }
-        .swipe-text {
-            font-size: 1rem; /* Ajuster la taille du texte */
-            font-family: 'RimouskiSB', sans-serif;
-            color: #d96728;
-        }
-        .swipe-arrow {
-            display: inline-block;
-            animation: moveArrow 1.5s linear infinite;
-        }
-        @keyframes moveArrow {
-            0%, 100% {
-                transform: translateX(0);
-            }
-            50% {
-                transform: translateX(10px);
-            }
-        }
-        @media (max-width: 768px) {
-            .header-svg-container {
-                transform: scale(4) translateY(50px); /* Agrandir et déplacer le SVG vers le bas */
-            }
-            .header-title {
-                padding: 30px 0 10px;
-            }
-            .swipe-text {
-                font-size: 0.875rem; /* Taille plus petite pour mobile */
-            }
-            #searchHistory {
-                display: none; /* Masquer l'historique sous forme de boutons sur mobile */
-            }
-            #mobileHistoryMenu {
-                display: block; /* Afficher le menu burger sur mobile */
-            }
-        }
-        @media (min-width: 769px) {
-            #mobileHistoryMenu {
-                display: none; /* Masquer le menu burger sur les grands écrans */
-            }
-        }
-        .title {
-            font-family: 'RimouskiSB', sans-serif; /* Appliquer la police RimouskiSB aux titres */
-        }
-        .mobile-history {
-            display: none;
-            flex-direction: column;
-            gap: 0.5rem;
+
+        .search-bar {
+            position: sticky;
+            top: 0;
+            background: white;
             padding: 1rem;
-            background-color: #f3f4f6; /* Couleur de fond gris clair */
-            position: absolute;
-            top: 50px; /* Positionner sous la barre de recherche */
-            right: 0;
-            width: 100%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            z-index: 10;
+            z-index: 40;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .mobile-history.open {
-            display: flex;
+
+        .filters {
+            display: none;
+            padding: 1rem;
+            background: white;
+        }
+
+        .filters.visible {
+            display: block;
+        }
+
+        .favorite {
+            color: gold;
         }
     </style>
 </head>
-<body class="bg-orange-100">
-    <div class="header-container">
-        <div class="header-svg-container">
-            <svg class="header-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="#fbefea" fill-opacity="1" d="M0,160L48,149.3C96,139,192,117,288,101.3C384,85,480,75,576,101.3C672,128,768,192,864,197.3C960,203,1056,149,1152,117.3C1248,85,1344,75,1392,69.3L1440,64L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path></svg>
-        </div>
-        <h1 class="header-title text-4xl font-bold">Annuaire des Établissements</h1>
-        <div class="swipe-text text-lg mt-2">Swipez vers la droite pour afficher la carte <i class="fa-solid fa-arrow-right-long swipe-arrow"></i></div>
+<body class="bg-gray-100 dark:bg-gray-900" data-theme="light">
+    <!-- Pull to refresh indicator -->
+    <div class="pull-indicator dark:text-gray-300">
+        <span class="text-sm">↓ Tirez pour actualiser</span>
     </div>
-    
-    <div class="container mx-auto px-4">
-        <div class="mb-6 space-y-4">
-            <input id="searchInput" type="text" placeholder="Rechercher un établissement..." class="w-full p-3 rounded-lg shadow-sm border-orange-300 focus:ring focus:ring-orange-500">
-            <div id="searchHistory" class="mb-4"></div>
-            <div id="mobileHistoryMenu" class="relative">
-                <button id="toggleHistoryMenu" class="bg-gray-200 px-4 py-2 rounded-full text-sm">
-                    <i class="fas fa-bars"></i> Historique
-                </button>
-                <button id="clearHistory" class="bg-red-500 text-white px-4 py-2 rounded-full mb-4 ml-2">Effacer l'historique</button>
-                <div id="mobileHistoryContainer" class="mobile-history"></div>
+
+    <!-- Thème toggle -->
+    <button id="themeToggle" class="fixed top-20 right-4 z-50 p-2 rounded-full bg-white dark:bg-gray-800 shadow-lg">
+        <i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i>
+    </button>
+
+    <!-- Menu de partage -->
+    <div class="share-menu">
+        <div class="text-lg font-semibold mb-4">Partager l'établissement</div>
+        <div class="grid grid-cols-4 gap-4">
+            <button class="share-option flex flex-col items-center" data-type="copy">
+                <i class="fas fa-link text-2xl mb-2"></i>
+                <span class="text-sm">Copier le lien</span>
+            </button>
+            <button class="share-option flex flex-col items-center" data-type="whatsapp">
+                <i class="fab fa-whatsapp text-2xl mb-2"></i>
+                <span class="text-sm">WhatsApp</span>
+            </button>
+            <button class="share-option flex flex-col items-center" data-type="sms">
+                <i class="fas fa-sms text-2xl mb-2"></i>
+                <span class="text-sm">SMS</span>
+            </button>
+            <button class="share-option flex flex-col items-center" data-type="email">
+                <i class="fas fa-envelope text-2xl mb-2"></i>
+                <span class="text-sm">Email</span>
+            </button>
+        </div>
+    </div>
+    <!-- Barre de recherche fixe en haut -->
+    <div class="search-bar">
+        <div class="relative">
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" 
+                   id="searchInput"
+                   class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300"
+                   placeholder="Rechercher un établissement...">
+            <button id="filterToggle" 
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <i class="fas fa-sliders-h text-gray-400"></i>
+            </button>
+            
+            <!-- Historique de recherche -->
+            <div class="search-history" id="searchHistory">
+                <!-- Les éléments seront ajoutés dynamiquement -->
             </div>
-            <select id="serviceFilter" class="w-full p-3 rounded-lg shadow-sm border-orange-300 focus:ring focus:ring-orange-500">
+        </div>
+    </div>
+
+    <!-- Filtres repliables -->
+    <div class="filters" id="filters">
+        <div class="space-y-4">
+            <select id="serviceFilter" class="w-full p-2 rounded-lg border border-gray-300">
                 <option value="">Tous les services</option>
-                <!-- Options ajoutées dynamiquement -->
             </select>
-            <select id="localityFilter" class="w-full p-3 rounded-lg shadow-sm border-orange-300 focus:ring focus:ring-orange-500">
+            <select id="localityFilter" class="w-full p-2 rounded-lg border border-gray-300">
                 <option value="">Toutes les localités</option>
-                <!-- Options ajoutées dynamiquement -->
             </select>
         </div>
-        
-        <div id="establishments" class="space-y-6"></div>
     </div>
+
+    <!-- Liste des établissements -->
+    <div id="establishments" class="pb-20">
+    </div>
+
+    <!-- Barre de navigation du bas -->
+    <div class="bottom-bar">
+        <a href="#" class="bottom-bar-item active" id="showAll">
+            <i class="fas fa-home"></i>
+            <span>Accueil</span>
+        </a>
+        <a href="#" class="bottom-bar-item" id="showFavorites">
+            <i class="fas fa-star"></i>
+            <span>Favoris</span>
+        </a>
+    </div>
+
     <script>
+    // Vibration helper
+    const vibrate = (pattern = [100]) => {
+        if ("vibrate" in navigator) {
+            navigator.vibrate(pattern);
+        }
+    };
+
+    // Share helper
+    const shareEstablishment = async (establishment) => {
+        const shareData = {
+            title: establishment.title,
+            text: `${establishment.title} - ${establishment.field_address_address_line1}, ${establishment.field_address_postal_code} ${establishment.field_address_locality}`,
+            url: establishment.url
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.warn('Error sharing:', err);
+                showShareMenu(establishment);
+            }
+        } else {
+            showShareMenu(establishment);
+        }
+    };
+
+    const showShareMenu = (establishment) => {
+        const menu = document.querySelector('.share-menu');
+        menu.classList.add('visible');
+        
+        // Configure share options
+        menu.querySelectorAll('.share-option').forEach(option => {
+            option.onclick = () => {
+                const type = option.dataset.type;
+                switch(type) {
+                    case 'copy':
+                        navigator.clipboard.writeText(establishment.url);
+                        menu.classList.remove('visible');
+                        break;
+                    case 'whatsapp':
+                        window.open(`whatsapp://send?text=${encodeURIComponent(establishment.url)}`);
+                        break;
+                    case 'sms':
+                        window.open(`sms:?body=${encodeURIComponent(establishment.url)}`);
+                        break;
+                    case 'email':
+                        window.open(`mailto:?subject=${encodeURIComponent(establishment.title)}&body=${encodeURIComponent(establishment.url)}`);
+                        break;
+                }
+                menu.classList.remove('visible');
+            };
+        });
+    };
+
+    // Pull to refresh
+    let touchStart = 0;
+    let pullDistance = 0;
+    const pullIndicator = document.querySelector('.pull-indicator');
+
+    document.addEventListener('touchstart', (e) => {
+        if (document.scrollTop === 0) {
+            touchStart = e.touches[0].clientY;
+        }
+    });
+
+    document.addEventListener('touchmove', (e) => {
+        if (touchStart > 0) {
+            pullDistance = e.touches[0].clientY - touchStart;
+            if (pullDistance > 0) {
+                pullIndicator.style.transform = 
+                    `translateY(${Math.min(pullDistance * 0.5, 60)}px)`;
+            }
+        }
+    });
+
+    document.addEventListener('touchend', () => {
+        if (pullDistance > 60) {
+            // Rafraîchir les données
+            location.reload();
+        }
+        pullIndicator.style.transform = '';
+        touchStart = 0;
+        pullDistance = 0;
+    });
+
+    (() => {
+        'use strict';
+
         const HQ_LAT = 45.961439047042;
         const HQ_LNG = 5.3546056274713;
         let establishmentsData = [];
         let hoursData = {};
+        let userLat = null;
+        let userLng = null;
         let searchTimeout;
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+        let showOnlyFavorites = false;
+        let searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
 
-        function normalizeLocality(locality) {
-            return locality.trim().toLowerCase()
+        const normalizeString = (str) => {
+            return str.trim().toLowerCase()
                 .replace(/[-']/g, ' ')
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents
-        }
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        };
 
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Radius of the Earth in kilometers
+        const calculateDistance = (lat1, lon1, lat2, lon2) => {
+            const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lat2 - lon1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = 
                 0.5 - Math.cos(dLat)/2 + 
                 Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
                 (1 - Math.cos(dLon))/2;
             return R * 2 * Math.asin(Math.sqrt(a));
-        }
+        };
 
-        async function fetchEstablishments() {
+        const fetchHours = async () => {
             try {
-                const response = await fetch('updated_establishments.json'); // Assurez-vous que ce fichier est servi par votre serveur web
-                const data = await response.json();
-                establishmentsData = deduplicateEstablishments(data);
-                populateFilters(establishmentsData);
-                establishmentsData.sort((a, b) => a.title.localeCompare(b.title, 'fr', { ignorePunctuation: true }));
-                displayEstablishments(establishmentsData);
+                const response = await fetch('establishments_hours.json');
+                hoursData = await response.json();
             } catch (error) {
-                console.error('Erreur lors de la récupération des établissements:', error);
+                console.error('Erreur lors de la récupération des horaires:', error);
             }
-        }
+        };
 
-        async function fetchHours() {
-            try {
-                const response = await fetch('https://nolannorofino.fr/establishments_hours.json'); // Utilisez le chemin correct pour votre fichier JSON
-                const text = await response.text(); // Lire la réponse en texte brut
-                if (response.ok) {
-                    try {
-                        hoursData = JSON.parse(text);
-                    } catch (jsonError) {
-                        console.error('Le fichier des horaires n\'est pas au format JSON valide:', text);
-                    }
-                } else {
-                    console.error('Erreur lors de la récupération des données horaires:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Erreur lors de la récupération des données horaires:', error);
-            }
-        }
-
-        function deduplicateEstablishments(data) {
+        const deduplicateEstablishments = (data) => {
             const uniqueEstablishments = [];
             const ids = new Set();
-            
             data.forEach(est => {
                 if (!ids.has(est.entity_id)) {
                     uniqueEstablishments.push(est);
                     ids.add(est.entity_id);
                 }
             });
-
             return uniqueEstablishments;
-        }
+        };
 
-        function populateFilters(establishments) {
+        const fetchEstablishments = async () => {
+            try {
+                const response = await fetch('proxy.php');
+                const data = await response.json();
+                establishmentsData = deduplicateEstablishments(data);
+                establishmentsData.sort((a, b) => a.title.localeCompare(b.title, 'fr', {ignorePunctuation: true}));
+                populateFilters(establishmentsData);
+                establishmentsData.forEach(est => {
+                    est.normalizedTitle = normalizeString(est.title);
+                    est.normalizedAddressLine = normalizeString(est.field_address_address_line1);
+                    est.normalizedLocality = normalizeString(est.field_address_locality);
+                    est.normalizedService = normalizeString(est.service);
+                    est.normalizedDescription = normalizeString(est.description);
+                });
+                displayEstablishments(establishmentsData); // Remplacez displayWithShare par displayEstablishments
+            } catch (error) {
+                console.error('Erreur lors de la récupération des établissements:', error);
+                document.getElementById('establishments').innerHTML = 
+                    '<div class="p-4 text-red-600">Impossible de charger les établissements.</div>';
+            }
+        };
+
+        const populateFilters = (establishments) => {
             const serviceFilter = document.getElementById('serviceFilter');
             const localityFilter = document.getElementById('localityFilter');
             
             const services = new Set();
-            const localities = new Map(); // Utiliser Map pour garder l'originalité des noms normalisés
+            const localities = new Map();
             
             establishments.forEach(est => {
-                services.add(est.service);
-                const normalizedLocality = normalizeLocality(est.field_address_locality);
-                if (!localities.has(normalizedLocality)) {
+                if (est.service) services.add(est.service);
+                if (est.field_address_locality) {
+                    const normalizedLocality = normalizeString(est.field_address_locality);
                     localities.set(normalizedLocality, est.field_address_locality);
-                } else {
-                    // Si la localité normalisée existe déjà, vérifiez si la version actuelle est plus propre
-                    if (est.field_address_locality.length < localities.get(normalizedLocality).length) {
-                        localities.set(normalizedLocality, est.field_address_locality);
-                    }
                 }
             });
 
@@ -249,163 +589,268 @@
                 serviceFilter.appendChild(option);
             });
 
-            // Convertir le Map en tableau, le trier, puis ajouter les options
-            const sortedLocalities = Array.from(localities.values()).sort((a, b) => a.localeCompare(b, 'fr', { ignorePunctuation: true }));
-            sortedLocalities.forEach(locality => {
-                const option = document.createElement('option');
-                option.value = locality;
-                option.textContent = locality;
-                localityFilter.appendChild(option);
-            });
-        }
-
-        function decodeHTMLEntities(text) {
-            const doc = new DOMParser().parseFromString(text, "text/html");
-            return doc.documentElement.textContent;
-        }
-
-        function displayEstablishments(establishments) {
-            const container = document.getElementById('establishments');
-            container.innerHTML = '';
-            establishments.forEach(est => {
-                const estDiv = document.createElement('div');
-                estDiv.className = 'bg-white p-6 rounded-lg shadow-lg border border-orange-300';
-
-                // Calculer la distance seulement si les coordonnées sont disponibles
-                let distanceText = 'Non disponible';
-                if (est.field_map_lat && est.field_map_lng) {
-                    const distance = calculateDistance(HQ_LAT, HQ_LNG, parseFloat(est.field_map_lat), parseFloat(est.field_map_lng));
-                    distanceText = `${distance.toFixed(2)} km`;
-                }
-
-                // Récupérer les horaires depuis le stockage local
-                const hours = hoursData[est.nid] || 'Non spécifiés';
-                let formattedHours = '';
-                if (typeof hours === 'object') {
-                    for (const [key, value] of Object.entries(hours)) {
-                        formattedHours += `<p><strong>${key}:</strong> ${value}</p>`;
-                    }
-                } else {
-                    formattedHours = hours;
-                }
-
-                estDiv.innerHTML = `
-                    <h2 class="text-2xl font-semibold mb-2 text-orange-700 title">${decodeHTMLEntities(est.title)}</h2>
-                    ${est.local_image ? `<img src="${est.local_image}" alt="${decodeHTMLEntities(est.title)}" class="rounded-img float-img">` : ''}
-                    <p class="text-gray-700 mb-2"><strong>Adresse :</strong> <a href="https://waze.com/ul?q=${encodeURIComponent(decodeHTMLEntities(est.field_address_address_line1 + ', ' + est.field_address_postal_code + ' ' + est.field_address_locality))}" target="_blank" class="text-orange-500 hover:underline">${decodeHTMLEntities(est.field_address_address_line1)}, ${decodeHTMLEntities(est.field_address_postal_code)} ${decodeHTMLEntities(est.field_address_locality)}</a></p>
-                    <p class="text-gray-700 mb-2"><strong>Téléphone :</strong> <a href="tel:${decodeHTMLEntities(est.phone)}" class="text-orange-500 hover:underline">${decodeHTMLEntities(est.phone)}</a></p>
-                    <p class="text-gray-700 mb-2"><strong>Service :</strong> ${decodeHTMLEntities(est.service)}</p>
-                    <p class="text-gray-700 mb-2"><strong>Distance depuis le siège :</strong> ${distanceText}</p>
-                    <p class="text-gray-700 mb-2"><strong>Horaires :</strong> ${formattedHours}</p>
-                    <p class="text-gray-700 mb-4"><strong>Description :</strong> ${decodeHTMLEntities(est.description)}</p>
-                    <a href="${decodeHTMLEntities(est.url)}" class="text-blue-500 hover:underline">Visitez le site</a>
-                `;
-
-                container.appendChild(estDiv);
-            });
-        }
-
-        function addToSearchHistory(query) {
-            let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
-            if (!history.includes(query)) {
-                if (history.length >= 10) {
-                    history.shift();
-                }
-                history.push(query);
-                localStorage.setItem('searchHistory', JSON.stringify(history));
-                displaySearchHistory();
-            }
-        }
-
-        function displaySearchHistory() {
-            const historyContainer = document.getElementById('searchHistory');
-            const mobileHistoryContainer = document.getElementById('mobileHistoryContainer');
-            historyContainer.innerHTML = '';
-            mobileHistoryContainer.innerHTML = '';
-            let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
-            history.forEach(query => {
-                const historyItem = document.createElement('button');
-                historyItem.className = 'bg-gray-200 px-4 py-2 rounded-full text-sm';
-                historyItem.textContent = query;
-                historyItem.addEventListener('click', () => {
-                    document.getElementById('searchInput').value = query;
-                    searchEstablishments();
+            Array.from(localities.values())
+                .sort((a, b) => a.localeCompare(b, 'fr', { ignorePunctuation: true }))
+                .forEach(locality => {
+                    const option = document.createElement('option');
+                    option.value = locality;
+                    option.textContent = locality;
+                    localityFilter.appendChild(option);
                 });
-                historyContainer.appendChild(historyItem);
+        };
 
-                const mobileHistoryItem = document.createElement('button');
-                mobileHistoryItem.className = 'bg-gray-200 px-4 py-2 rounded-full text-sm';
-                mobileHistoryItem.textContent = query;
-                mobileHistoryItem.addEventListener('click', () => {
-                    document.getElementById('searchInput').value = query;
-                    searchEstablishments();
-                    toggleHistoryMenu();
-                });
-                mobileHistoryContainer.appendChild(mobileHistoryItem);
-            });
-        }
-
-        function clearSearchHistory() {
-            localStorage.removeItem('searchHistory');
-            displaySearchHistory();
-        }
-
-        function toggleHistoryMenu() {
-            const mobileHistoryContainer = document.getElementById('mobileHistoryContainer');
-            mobileHistoryContainer.classList.toggle('open');
-        }
-
-        function searchEstablishments() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
+        
+        const searchEstablishments = () => {
+            const query = normalizeString(document.getElementById('searchInput').value);
             const serviceFilter = document.getElementById('serviceFilter').value;
             const localityFilter = document.getElementById('localityFilter').value;
 
-            const filteredEstablishments = establishmentsData.filter(est => 
-                (est.title.toLowerCase().includes(query) || 
-                est.field_address_address_line1.toLowerCase().includes(query) || 
-                est.field_address_locality.toLowerCase().includes(query) || 
-                est.service.toLowerCase().includes(query) || 
-                est.description.toLowerCase().includes(query)) &&
-                (serviceFilter === '' || est.service === serviceFilter) &&
-                (localityFilter === '' || est.field_address_locality === localityFilter)
-            );
+            const filteredEstablishments = establishmentsData.filter(est => {
+                const matchesSearch = !query || 
+                    est.normalizedTitle.includes(query) ||
+                    est.normalizedAddressLine.includes(query) ||
+                    est.normalizedLocality.includes(query) ||
+                    est.normalizedService.includes(query) ||
+                    est.normalizedDescription.includes(query);
 
-            displayEstablishments(filteredEstablishments);
-        }
+                const matchesService = !serviceFilter || est.service === serviceFilter;
+                const matchesLocality = !localityFilter || est.field_address_locality === localityFilter;
 
-        function delayedAddToSearchHistory() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const query = document.getElementById('searchInput').value.trim();
-                if (query) {
-                    const filteredEstablishments = establishmentsData.filter(est =>
-                        est.title.toLowerCase().includes(query.toLowerCase()) ||
-                        est.field_address_address_line1.toLowerCase().includes(query.toLowerCase()) ||
-                        est.field_address_locality.toLowerCase().includes(query.toLowerCase()) ||
-                        est.service.toLowerCase().includes(query.toLowerCase()) ||
-                        est.description.toLowerCase().includes(query.toLowerCase())
-                    );
-                    if (filteredEstablishments.length > 0) {
-                        const mostRelevantEstablishment = filteredEstablishments[0];
-                        addToSearchHistory(mostRelevantEstablishment.title);
-                    }
+                return matchesSearch && matchesService && matchesLocality;
+            });
+
+                            displayWithShare(filteredEstablishments);
+        };
+
+        const toggleFavorite = (nid, button) => {
+            const icon = button.querySelector('i');
+            if (favorites.includes(nid)) {
+                favorites = favorites.filter(favNid => favNid !== nid);
+                icon.classList.remove('favorite', 'fas');
+                icon.classList.add('far');
+            } else {
+                favorites.push(nid);
+                icon.classList.add('favorite', 'fas');
+                icon.classList.remove('far');
+            }
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            
+            if (showOnlyFavorites) {
+                displayEstablishments(establishmentsData);
+            }
+        };
+
+        // Gestion du thème sombre
+        const toggleTheme = () => {
+            const theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+            document.body.dataset.theme = theme;
+            localStorage.setItem('theme', theme);
+            vibrate();
+        };
+
+        // Gestion de l'historique de recherche
+        const addToSearchHistory = (query) => {
+            if (!searchHistory.includes(query)) {
+                searchHistory.unshift(query);
+                if (searchHistory.length > 5) {
+                    searchHistory.pop();
                 }
-            }, 3000);
-        }
+                localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+                updateSearchHistory();
+            }
+        };
 
+        const updateSearchHistory = () => {
+            const container = document.getElementById('searchHistory');
+            container.innerHTML = '';
+            searchHistory.forEach(query => {
+                const item = document.createElement('div');
+                item.className = 'search-history-item';
+                item.innerHTML = `
+                    <span>${query}</span>
+                    <i class="fas fa-clock text-gray-400"></i>
+                `;
+                item.addEventListener('click', () => {
+                    document.getElementById('searchInput').value = query;
+                    searchEstablishments();
+                    container.classList.remove('visible');
+                });
+                container.appendChild(item);
+            });
+        };
+
+        // Gestionnaires d'événements
         document.getElementById('searchInput').addEventListener('input', () => {
-            searchEstablishments();
-            delayedAddToSearchHistory();
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchEstablishments, 300);
         });
+
         document.getElementById('serviceFilter').addEventListener('change', searchEstablishments);
         document.getElementById('localityFilter').addEventListener('change', searchEstablishments);
-        document.getElementById('clearHistory').addEventListener('click', clearSearchHistory);
-        document.getElementById('toggleHistoryMenu').addEventListener('click', toggleHistoryMenu);
 
-        // Charger les établissements et les horaires
-        fetchHours().then(fetchEstablishments);
-        // Afficher l'historique des recherches au chargement de la page
-        displaySearchHistory();
+        document.getElementById('filterToggle').addEventListener('click', () => {
+            document.getElementById('filters').classList.toggle('visible');
+        });
+
+        document.getElementById('showFavorites').addEventListener('click', (e) => {
+            e.preventDefault();
+            showOnlyFavorites = !showOnlyFavorites;
+            document.getElementById('showFavorites').classList.toggle('active');
+            document.getElementById('showAll').classList.toggle('active');
+            displayEstablishments(establishmentsData);
+        });
+
+        document.getElementById('showAll').addEventListener('click', (e) => {
+            e.preventDefault();
+            showOnlyFavorites = false;
+            document.getElementById('showFavorites').classList.remove('active');
+            document.getElementById('showAll').classList.add('active');
+            displayEstablishments(establishmentsData);
+        });
+
+        // Ajout des gestionnaires d'événements pour les nouvelles fonctionnalités
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+        document.getElementById('searchInput').addEventListener('focus', () => {
+            document.getElementById('searchHistory').classList.add('visible');
+        });
+
+        document.addEventListener('click', (e) => {
+            const searchHistory = document.getElementById('searchHistory');
+            const searchInput = document.getElementById('searchInput');
+            if (!searchInput.contains(e.target) && !searchHistory.contains(e.target)) {
+                searchHistory.classList.remove('visible');
+            }
+        });
+
+        // Mettre à jour la fonction displayEstablishments pour ajouter le partage
+        const displayEstablishments = (establishments) => {
+            const container = document.getElementById('establishments');
+            container.innerHTML = '';
+            
+            const imageBaseURL = "https://nolannorofino.fr/app/alfa3a/anu/images/";
+
+            let filteredEstablishments = establishments;
+            if (showOnlyFavorites) {
+                filteredEstablishments = establishments.filter(est => favorites.includes(est.nid));
+            }
+
+            // Tri des établissements
+            filteredEstablishments.sort((a, b) => {
+                if (userLat !== null && userLng !== null && a.field_map_lat && b.field_map_lat) {
+                    const distanceA = calculateDistance(
+                        userLat, 
+                        userLng, 
+                        parseFloat(a.field_map_lat), 
+                        parseFloat(a.field_map_lng)
+                    );
+                    const distanceB = calculateDistance(
+                        userLat, 
+                        userLng, 
+                        parseFloat(b.field_map_lat), 
+                        parseFloat(b.field_map_lng)
+                    );
+                    return distanceA - distanceB;
+                }
+                return a.title.localeCompare(b.title, 'fr', {ignorePunctuation: true});
+            });
+
+            filteredEstablishments.forEach((est, index) => {
+                const card = document.createElement('div');
+                card.className = 'establishment-card';
+                
+                const imageUrl = `${imageBaseURL}${est.entity_id}.jpg`;
+                
+                const hours = hoursData[est.nid] || 'Non spécifiés';
+                let formattedHours = '';
+                if (typeof hours === 'string') {
+                    formattedHours = hours.replace(/\n+/g, '<br>');
+                } else if (typeof hours === 'object') {
+                    for (const [key, value] of Object.entries(hours)) {
+                        formattedHours += `<strong>${key}:</strong> ${value}<br>`;
+                    }
+                }
+
+                const isFavorite = favorites.includes(est.nid);
+                const favoriteClass = isFavorite ? 'favorite' : '';
+                const favoriteIcon = isFavorite ? 'fas' : 'far';
+
+                card.innerHTML = `
+                    <div class="image-container">
+                        <img src="${imageUrl}" 
+                             alt="${est.title}" 
+                             class="card-image" 
+                             onerror="this.parentElement.style.display='none'"
+                             loading="lazy">
+                    </div>
+                    <div class="p-4 relative">
+                        <div class="flex justify-between items-start mb-3">
+                            <h2 class="text-lg font-semibold">${est.title}</h2>
+                            <div class="flex gap-2">
+                                <button class="share-btn p-2" data-index="${index}">
+                                    <i class="fas fa-share-alt"></i>
+                                </button>
+                                <button class="favorite-btn p-2" data-nid="${est.nid}">
+                                    <i class="${favoriteIcon} fa-star text-xl ${favoriteClass}"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-2">${est.field_address_address_line1}, ${est.field_address_postal_code} ${est.field_address_locality}</p>
+                        <p class="text-gray-600 mb-3">Service: ${est.service}</p>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <a href="tel:${est.phone}" class="flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full">
+                                <i class="fas fa-phone mr-2"></i>
+                                Appeler
+                            </a>
+                            <a href="geo:${est.field_map_lat},${est.field_map_lng}?q=${encodeURIComponent(est.field_address_address_line1 + ', ' + est.field_address_postal_code + ' ' + est.field_address_locality)}" 
+                               class="flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full">
+                                <i class="fas fa-map-marker-alt mr-2"></i>
+                                Itinéraire
+                            </a>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <p class="font-semibold mb-1">Horaires:</p>
+                            ${formattedHours}
+                        </div>
+                    </div>
+                `;
+
+                const favoriteBtn = card.querySelector('.favorite-btn');
+                favoriteBtn.addEventListener('click', () => toggleFavorite(est.nid, favoriteBtn));
+
+                const shareBtn = card.querySelector('.share-btn');
+                shareBtn.addEventListener('click', () => shareEstablishment(est));
+
+                container.appendChild(card);
+            });
+        };
+
+        // Désactiver le zoom sur les inputs sur mobile
+        document.querySelector('input[type="text"]').addEventListener('focus', (e) => {
+            e.target.setAttribute('readonly', 'readonly');
+            setTimeout(() => {
+                e.target.removeAttribute('readonly');
+            }, 100);
+        });
+
+        // Initialisation avec géolocalisation
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    userLat = position.coords.latitude;
+                    userLng = position.coords.longitude;
+                    fetchHours().then(fetchEstablishments);
+                },
+                error => {
+                    console.error('Erreur de géolocalisation:', error);
+                    fetchHours().then(fetchEstablishments);
+                }
+            );
+        } else {
+            fetchHours().then(fetchEstablishments);
+        }
+
+    })();
     </script>
 </body>
 </html>

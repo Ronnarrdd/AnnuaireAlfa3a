@@ -2,82 +2,106 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Carte Interactif avec Leaflet</title>
+    <title>Carte Interactive avec Clustering de Marqueurs et Géolocalisation</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.Default.css">
     <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            padding: 0;
+        /* Déclaration des @font-face pour les polices personnalisées */
+        @font-face {
+            font-family: 'RimouskiSB';
+            src: url('fonts/rimouskisb-regular-webfont.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
         }
-        #map {
-            width: 100%;
-            height: 100%;
+        @font-face {
+            font-family: 'MerriweatherSans';
+            src: url('fonts/merriweathersans-regular-webfont.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
         }
-        .leaflet-popup-content {
-            width: 200px;
-        }
-        /* Style pour le SVG utilisé comme icône de marqueur */
-        .svg-marker-icon {
-            width: 30px;
-            height: 40px;
-            fill: #d96728;
-        }
+        body, html { height: 100%; margin: 0; padding: 0; }
+        #map { height: 100%; }
+        .leaflet-popup-content { width: 200px; font-family: 'MerriweatherSans', sans-serif; font-size: 14px; }
+        .leaflet-popup-content strong { font-family: 'RimouskiSB', sans-serif; color: #333; }
+        .leaflet-popup-content a { color: #d96728; text-decoration: none; }
+        .leaflet-popup-content a:hover { text-decoration: underline; }
+        .svg-marker-icon { width: 30px; height: 40px; }
     </style>
 </head>
 <body>
     <div id="map"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/leaflet.markercluster.js"></script>
     <script>
         var map;
+        var userLocation; // To store the user's location
+
         function initMap() {
-            // Création de la carte sans le contrôle de zoom par défaut
             map = L.map('map', {
                 dragging: true,
                 scrollWheelZoom: false,
                 zoomControl: false
             }).setView([45.9575298, 5.3356586], 8);
 
-            // Ajout de la couche de tuiles
-            var osmUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+            var osmUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
             var osmAttrib = 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
-            var osm = new L.TileLayer(osmUrl, {minZoom: 3, maxZoom: 18, attribution: osmAttrib});
+            var osm = new L.TileLayer(osmUrl, {minZoom: 3, maxZoom: 24, attribution: osmAttrib});
             map.addLayer(osm);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-            // Ajout du contrôle de zoom après avoir créé la carte
-            L.control.zoom({
-                position: 'bottomright'
-            }).addTo(map);
-
-            // Fonction pour ajouter des marqueurs à la carte
-            buildCoordsWithJSON();
+            var markers = L.markerClusterGroup();
+            buildCoordsWithJSON(markers);
+            map.addLayer(markers);
+            locateUser();
         }
 
-        function buildCoordsWithJSON() {
-            var url = 'proxy.php'; // Utilisation du fichier proxy pour les requêtes AJAX
+        function locateUser() {
+            map.locate({setView: false, maxZoom: 16});
+
+            map.on('locationfound', function(e) {
+                userLocation = e.latlng;
+                L.circle(userLocation, {
+                    color: 'blue',
+                    fillColor: '#30f',
+                    fillOpacity: 0.5,
+                    radius: e.accuracy
+                }).addTo(map);
+            });
+        }
+
+        function buildCoordsWithJSON(markers) {
+            var url = 'proxy.php';
             $.get(url, function(data) {
-                // Supposons que `data` est une liste d'objets avec des données de marqueur
                 data.forEach(function(item) {
+                    var color = getRandomColor();
                     var customIcon = L.divIcon({
                         className: "svg-marker-icon",
-                        html: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>',
+                        html: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" style="fill: ' + color + ';"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>',
                         iconSize: [30, 40],
                         iconAnchor: [15, 40]
                     });
-                    var marker = L.marker([item.field_map_lat, item.field_map_lng], {icon: customIcon}).addTo(map);
-                    marker.bindPopup(
+                    var distance = userLocation ? map.distance(userLocation, L.latLng(item.field_map_lat, item.field_map_lng)) : "Unavailable";
+                    var geoLink = `geo:${item.field_map_lat},${item.field_map_lng}`;
+                    var marker = L.marker([item.field_map_lat, item.field_map_lng], {icon: customIcon}).bindPopup(
                         `<strong>${item.title}</strong><br>` +
                         `${item.description}<br>` +
-                        `<a href="${item.url}" target="_blank">Plus d'info</a><br>` +
-                        `<em>${item.field_address_address_line1}, ${item.field_address_locality}</em><br>` +
-                        `<strong>Contact:</strong> ${item.phone}<br>` +
-                        `<strong>Services:</strong> ${item.service}`
+                        `<strong>Adresse :</strong> <a href="${geoLink}" target="_blank">${item.field_address_address_line1}, ${item.field_address_postal_code} ${item.field_address_locality}</a><br>` +
+                        `<strong>Contact :</strong> <a href="tel:${item.phone}">${item.phone}</a><br>` +
+                        `<strong>Services :</strong> ${item.service}<br>` +
+                        `<strong>Distance:</strong> ${(distance / 1000).toFixed(2)} km`
                     );
+                    markers.addLayer(marker);
                 });
             }).fail(function() {
                 console.error("Failed to fetch data");
             });
+        }
+
+        function getRandomColor() {
+            var colors = ['#1C9DBF', '#ED0577', '#A065AF', '#8D9F23', '#d96728'];
+            return colors[Math.floor(Math.random() * colors.length)];
         }
 
         document.addEventListener('DOMContentLoaded', initMap);
